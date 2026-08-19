@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DGDATA Editor</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface-2: #243044;
+      --border: #2d3a4f;
+      --text: #e7ecf3;
+      --text-muted: #8b9bb4;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --radius: 10px;
+      --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+      --mono: "Cascadia Code", "Fira Code", "Consolas", "Monaco", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    header h1 span {
+      color: var(--accent);
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1.25rem;
+      gap: 1rem;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: #2d3f5a;
+      border-color: #3d4f6a;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    .btn-success {
+      background: #166534;
+      border-color: #15803d;
+      color: #bbf7d0;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background: #15803d;
+    }
+
+    .file-info {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .file-info strong {
+      color: var(--text);
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 280px;
+    }
+
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 1.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: #1a2740;
+      color: var(--text);
+    }
+
+    .dropzone.has-file {
+      border-style: solid;
+      border-color: var(--border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dropzone.has-file input {
+      display: none;
+    }
+
+    .editor-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+      position: relative;
+    }
+
+    #editor {
+      flex: 1;
+      width: 100%;
+      min-height: 320px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      line-height: 1.55;
+      padding: 1rem;
+      resize: vertical;
+      outline: none;
+      tab-size: 2;
+      white-space: pre;
+      overflow: auto;
+    }
+
+    #editor:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    #editor.invalid {
+      border-color: var(--danger);
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 var(--radius) var(--radius);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: -1px;
+    }
+
+    .status-msg {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .status-msg.ok { color: var(--success); }
+    .status-msg.err { color: var(--danger); }
+    .status-msg.warn { color: var(--warning); }
+
+    footer {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      color: var(--accent);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.7rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      transition: transform 0.25s ease;
+      z-index: 100;
+      max-width: 90vw;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.error {
+      border-color: var(--danger);
+      background: #2a1520;
+    }
+
+    .toast.success {
+      border-color: var(--success);
+      background: #0f2a1a;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 0.85rem 1rem;
+      }
+      main {
+        padding: 0.85rem;
+      }
+      .toolbar {
+        width: 100%;
+      }
+      .btn {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><span>DGDATA</span> Editor <span class="badge">By MidNighT</span></h1>
+    <div class="file-info" id="fileInfo">
+      No file loaded
+    </div>
+  </header>
+
+  <main>
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="*/*" />
+      <div id="dropLabel">
+        Drop a <strong>.dgdata</strong> / binary file here, or click to browse
+      </div>
+      <div id="fileActions" style="display:none; gap:0.5rem;">
+        <button type="button" class="btn" id="changeFileBtn">Change file</button>
+        <button type="button" class="btn" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button type="button" class="btn" id="newBtn" title="Start with empty JSON object">New</button>
+      <button type="button" class="btn" id="formatBtn" title="Pretty-print / validate JSON">Format JSON</button>
+      <button type="button" class="btn btn-success" id="downloadBtn" disabled title="Encode and download">
+        Download
+      </button>
+    </div>
+
+    <div class="editor-wrap">
+      <textarea id="editor" spellcheck="false" placeholder='Load a DGDATA file or click "New" to start editing…'></textarea>
+      <div class="status-bar">
+        <div class="status-msg" id="statusMsg">Ready</div>
+        <div id="stats">0 chars</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Improved DGDATA Editor · By MidNighT ·
+    <a href="" target="_blank" rel="noopener"></a>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ─── Original encode / decode logic (kept compatible) ───────────────────
+    const decode = (buf) =>
+      new TextDecoder()
+        .decode(buf.map((b, i) => b - (21 + ((i - 14) % 6))))
+        .substr(14);
+
+    const encode = (str) => {
+      let buf = new TextEncoder().encode(str);
+      const header = "DGDATA" + hash1(buf);
+      buf = buf.map((b, i) => {
+        b += 21;
+        b += i % 6;
+        b %= 256;
+        return b;
+      });
+      return new Uint8Array([
+        ...new TextEncoder().encode(header),
+        ...buf,
+      ]);
+    };
+
+    const hash1 = (buf) => {
+      let hash = 0;
+      buf.forEach((s) => {
+        hash = ((hash >> 8) & 16777215) ^ hash2((hash ^ s) & 255);
+      });
+      if (hash < 0) {
+        hash = 4294967295 + hash + 1;
+      }
+      let hex = hash.toString(16);
+      while (hex.length < 8) hex = "0" + hex;
+      return hex;
+    };
+
+    const hash2 = (num) => {
+      const loc4 = 3988292384;
+      for (let i = 0; i < 8; i++) {
+        if (num & 1) {
+          num = num >> 1;
+          num = num ^ loc4;
+        } else {
+          num = num >> 1;
+        }
+      }
+      return num;
+    };
+
+    // ─── UI helpers ─────────────────────────────────────────────────────────
+    const $ = (sel) => document.querySelector(sel);
+    const editor = $("#editor");
+    const fileInput = $("#fileInput");
+    const dropzone = $("#dropzone");
+    const dropLabel = $("#dropLabel");
+    const fileActions = $("#fileActions");
+    const fileInfo = $("#fileInfo");
+    const statusMsg = $("#statusMsg");
+    const stats = $("#stats");
+    const downloadBtn = $("#downloadBtn");
+    const toastEl = $("#toast");
+
+    let currentFileName = null;
+    let toastTimer = null;
+
+    function showToast(message, type = "") {
+      clearTimeout(toastTimer);
+      toastEl.textContent = message;
+      toastEl.className = "toast show" + (type ? " " + type : "");
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove("show");
+      }, 2800);
+    }
+
+    function setStatus(text, type = "") {
+      statusMsg.textContent = text;
+      statusMsg.className = "status-msg" + (type ? " " + type : "");
+    }
+
+    function updateStats() {
+      const len = editor.value.length;
+      stats.textContent = len.toLocaleString() + " chars";
+    }
+
+    function setHasFile(name) {
+      currentFileName = name;
+      if (name) {
+        dropzone.classList.add("has-file");
+        dropLabel.style.display = "none";
+        fileActions.style.display = "flex";
+        fileInfo.innerHTML = `Loaded: <strong title="${name}">${name}</strong>`;
+        downloadBtn.disabled = false;
+      } else {
+        dropzone.classList.remove("has-file");
+        dropLabel.style.display = "block";
+        fileActions.style.display = "none";
+        fileInfo.textContent = "No file loaded";
+        downloadBtn.disabled = true;
+        currentFileName = null;
+      }
+    }
+
+    function validateJSON(showError = true) {
+      const raw = editor.value.trim();
+      if (!raw) {
+        editor.classList.remove("invalid");
+        setStatus("Empty", "warn");
+        return null;
+      }
+      try {
+        const obj = JSON.parse(raw);
+        editor.classList.remove("invalid");
+        setStatus("Valid JSON", "ok");
+        return obj;
+      } catch (e) {
+        editor.classList.add("invalid");
+        setStatus("Invalid JSON: " + e.message, "err");
+        if (showError) showToast("Invalid JSON — fix errors before downloading", "error");
+        return null;
+      }
+    }
+
+    // ─── Core actions ───────────────────────────────────────────────────────
+    function loadFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const array = new Uint8Array(reader.result);
+          if (array.length < 14) {
+            throw new Error("File too small to be valid DGDATA");
+          }
+          const decoded = decode(array);
+          const parsed = JSON.parse(decoded);
+          editor.value = JSON.stringify(parsed, null, "\t");
+          setHasFile(file.name);
+          setStatus("Loaded & decoded successfully", "ok");
+          updateStats();
+          showToast("File loaded", "success");
+        } catch (err) {
+          console.error(err);
+          setStatus("Failed to decode: " + err.message, "err");
+          showToast("Could not decode file. Is it a valid DGDATA?", "error");
+        }
+      };
+      reader.onerror = () => {
+        showToast("Failed to read file", "error");
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function download() {
+      const obj = validateJSON(true);
+      if (obj === null) return;
+
+      // Re-serialize to compact form (same as original)
+      const compact = JSON.stringify(obj);
+      const data = encode(compact);
+
+      const name = currentFileName || "edited.dgdata";
+      const blob = new Blob([data], { type: "application/octet-stream" });
+      const a = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+      showToast("Downloaded: " + name, "success");
+      setStatus("Downloaded successfully", "ok");
+    }
+
+    function formatJSON() {
+      const obj = validateJSON(true);
+      if (obj === null) return;
+      editor.value = JSON.stringify(obj, null, "\t");
+      updateStats();
+      showToast("JSON formatted", "success");
+    }
+
+    function newFile() {
+      editor.value = "{\n\t\n}";
+      setHasFile("new.dgdata");
+      setStatus("New empty object", "ok");
+      updateStats();
+      editor.focus();
+      // Place cursor inside the braces
+      editor.setSelectionRange(3, 3);
+    }
+
+    function clearAll() {
+      editor.value = "";
+      setHasFile(null);
+      fileInput.value = "";
+      setStatus("Ready");
+      updateStats();
+    }
+
+    // ─── Event wiring ───────────────────────────────────────────────────────
+    fileInput.addEventListener("change", () => {
+      if (fileInput.files[0]) loadFile(fileInput.files[0]);
+    });
+
+    $("#changeFileBtn").addEventListener("click", () => {
+      fileInput.value = "";
+      fileInput.click();
+    });
+
+    $("#clearBtn").addEventListener("click", clearAll);
+    $("#newBtn").addEventListener("click", newFile);
+    $("#formatBtn").addEventListener("click", formatJSON);
+    $("#downloadBtn").addEventListener("click", download);
+
+    // Drag & drop
+    ["dragenter", "dragover"].forEach((evt) => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.add("dragover");
+      });
+    });
+    ["dragleave", "drop"].forEach((evt) => {
+      dropzone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropzone.classList.remove("dragover");
+      });
+    });
+    dropzone.addEventListener("drop", (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file) loadFile(file);
+    });
+
+    // Live validation + stats while typing
+    let debounce;
+    editor.addEventListener("input", () => {
+      updateStats();
+      clearTimeout(debounce);
+      debounce = setTimeout(() => validateJSON(false), 400);
+    });
+
+    // Tab key inserts two spaces / tab character
+    editor.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const val = editor.value;
+        editor.value = val.substring(0, start) + "\t" + val.substring(end);
+        editor.selectionStart = editor.selectionEnd = start + 1;
+      }
+    });
+
+    // Initial state
+    updateStats();
+  </script>
+</body>
+</html>
